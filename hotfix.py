@@ -58,6 +58,17 @@ s=s.replace("""def para(c,t,x,yt,w,h,style=PB):
     text=html.escape(clean(t),quote=False)
     p=Paragraph(text,style); _,a=p.wrap(w,h); p.drawOn(c,x,yt-a); return a
 """)
+s=s.replace("""def alpha(c,col,a,x,y,w,h):
+    c.saveState();
+    try:c.setFillAlpha(a)
+    except:pass
+    c.setFillColor(col); c.rect(x,y,w,h,fill=1,stroke=0); c.restoreState()
+""", """def alpha(c,col,a,x,y,w,h):
+    c.saveState(); c.setFillColor(col)
+    try:c.setFillAlpha(a)
+    except:pass
+    c.rect(x,y,w,h,fill=1,stroke=0); c.restoreState()
+""")
 s=s.replace("return {'u':u,'p':img(oi or fall,'champ_'+d['id'],.91),'story':paras(src,5),'desc':od}", "return {'u':u,'p':img(fall,'champ_'+d['id'],.91),'story':paras(src,5),'desc':od}")
 s=s.replace("ver=get('https://ddragon.leagueoflegends.com/api/versions.json').json()[0]; base=get(f'https://ddragon.leagueoflegends.com/cdn/{ver}/data/tr_TR/champion.json').json()['data']; ds=[detail(ver,x['id']) for x in sorted(base.values(),key=lambda x:x['name'].casefold())];print(ver,len(ds))", "ver=get('https://ddragon.leagueoflegends.com/api/versions.json').json()[0]; base=get(f'https://ddragon.leagueoflegends.com/cdn/{ver}/data/tr_TR/champion.json').json()['data']; canonical=[x for x in base.values() if '_' not in x.get('id','')]; uniq={}\n    for x in canonical:\n        k=str(x.get('key') or x.get('name'))\n        if k not in uniq: uniq[k]=x\n    ds=[detail(ver,x['id']) for x in sorted(uniq.values(),key=lambda x:x['name'].casefold())];print(ver,len(ds))")
 s=s.replace("yy=226", "yy=225")
