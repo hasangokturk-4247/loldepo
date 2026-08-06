@@ -24,16 +24,22 @@ jobs:
           sudo apt-get install -y fonts-dejavu-core poppler-utils
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4 lxml pillow reportlab
+      - name: Apply hotfixes
+        run: python hotfix.py
       - name: Build PDF
         run: python build.py
       - name: Verify PDF
         run: |
           test -s output/LOL_Ansiklopedi_Riot_2026.pdf
           pdfinfo output/LOL_Ansiklopedi_Riot_2026.pdf
+          mkdir -p qa
+          pdftoppm -f 1 -l 4 -jpeg -r 100 output/LOL_Ansiklopedi_Riot_2026.pdf qa/page
       - name: Upload PDF
         uses: actions/upload-artifact@v4
         with:
           name: LOL_Ansiklopedi_Riot_2026
-          path: output/LOL_Ansiklopedi_Riot_2026.pdf
+          path: |
+            output/LOL_Ansiklopedi_Riot_2026.pdf
+            qa/*.jpg
           retention-days: 7
           compression-level: 0
