@@ -25,6 +25,7 @@ jobs:
           test "$(sha256sum /tmp/grm.tar.xz | awk '{print $1}')" = "f4d3b1143362aa34d32083298523b2fb945c8cd682c697a7460ee5cf0a129efb"
           rm -rf app build.gradle settings.gradle gradle.properties README.md
           tar -xJf /tmp/grm.tar.xz
+          rm -f app/src/main/res/drawable/icon.xml
       - name: Prepare Android SDK
         run: |
           set -euxo pipefail
