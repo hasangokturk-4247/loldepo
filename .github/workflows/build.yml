@@ -27,26 +27,7 @@ jobs:
           tar -xJf /tmp/grm.tar.xz
           rm -f app/src/main/res/drawable/icon.xml
           sed -i 's/import android.app.PrintManager;/import android.print.PrintManager;/' app/src/main/java/com/decod/grm/MainActivity.java
-      - name: Prepare Android SDK
+      - name: Show GCM call sites
         run: |
-          set -euxo pipefail
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          export ANDROID_SDK_ROOT=$ANDROID_HOME
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
-      - name: Build debug APK
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: gradle :app:assembleDebug --stacktrace
-      - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk G-Rm_Android_v22.0.1_QR.apk
-      - uses: actions/upload-artifact@v4
-        with:
-          name: G-Rm_Android_v22.0.1_QR
-          path: G-Rm_Android_v22.0.1_QR.apk
-          retention-days: 7
-          compression-level: 0
+          grep -R -n -C 3 -E 'GCMParameterSpec|Cipher\.ENCRYPT_MODE|AndroidKeyStore' app/src/main/java || true
+          exit 1
