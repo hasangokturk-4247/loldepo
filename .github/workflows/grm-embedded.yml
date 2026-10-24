@@ -1,0 +1,26 @@
+name: G-Rm Embedded Shell Build
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Publish x64 self-contained shell
+        shell: pwsh
+        run: |
+          dotnet publish grm-embedded/G-Rm.Shell.csproj -c Release -r win-x64 --self-contained true -o out/shell
+      - name: Package shell
+        shell: pwsh
+        run: |
+          Compress-Archive -Path out/shell/* -DestinationPath G-Rm_Embedded_Shell_v22.0.3.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: G-Rm_Embedded_Shell_v22.0.3
+          path: G-Rm_Embedded_Shell_v22.0.3.zip
+          retention-days: 7
