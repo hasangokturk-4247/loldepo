@@ -1,0 +1,41 @@
+name: G-Rm Native Windows Build
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download ZXing.Net
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://www.nuget.org/api/v2/package/ZXing.Net/0.16.11" -OutFile "$env:RUNNER_TEMP\zxing.zip"
+          Expand-Archive "$env:RUNNER_TEMP\zxing.zip" "$env:RUNNER_TEMP\zxing" -Force
+          Get-ChildItem "$env:RUNNER_TEMP\zxing" -Recurse -Filter zxing.dll | Select-Object FullName
+      - name: Compile native G-Rm
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          $z = Get-ChildItem "$env:RUNNER_TEMP\zxing" -Recurse -Filter zxing.dll | Where-Object { $_.FullName -match "net4" } | Select-Object -First 1
+          if (-not $z) { $z = Get-ChildItem "$env:RUNNER_TEMP\zxing" -Recurse -Filter zxing.dll | Select-Object -First 1 }
+          if (-not $z) { throw "zxing.dll bulunamadi" }
+          $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          & $csc /nologo /target:winexe /optimize+ /platform:x64 /out:out\G-Rm.exe /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll /reference:$($z.FullName) native\Program.cs native\Api.cs native\Dialogs.cs native\MainForm.cs native\MainForm.Views.cs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item $z.FullName out\zxing.dll
+          Get-FileHash out\G-Rm.exe -Algorithm SHA256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: G-Rm_Native_WinForms_v22.0.2
+          path: out\*
+          retention-days: 7
+          compression-level: 0
