@@ -1,7 +1,8 @@
 name: G-Rm Android Build
 on:
   push:
-    branches: [ grm-android-build ]
+    branches:
+      - grm-android-build
 permissions:
   contents: read
 jobs:
@@ -25,22 +26,7 @@ jobs:
           cp grm-final/real_icon.png app/src/main/res/drawable/icon.png
           cp grm-final/real_icon.png app/src/main/assets/logo.png
           sed -i 's/import android.app.PrintManager;/import android.print.PrintManager;/' app/src/main/java/com/decod/grm/MainActivity.java
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          p=Path('app/src/main/java/com/decod/grm/SecureStateStore.java')
-          s=p.read_text()
-          pat=r'byte\[\] iv = new byte\[12\];\s*CryptoUtil\.RNG\.nextBytes\(iv\);\s*Cipher cipher = Cipher\.getInstance\("AES/GCM/NoPadding"\);\s*cipher\.init\(Cipher\.ENCRYPT_MODE, getOrCreateKey\(\), new GCMParameterSpec\(128, iv\)\);\s*byte\[\] ct = cipher\.doFinal\(plain\);'
-          rep='''Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey());
-        byte[] iv = cipher.getIV();
-        if (iv == null || iv.length != 12) throw new IllegalStateException("Android Keystore IV üretemedi");
-        byte[] ct = cipher.doFinal(plain);'''
-          s2,n=re.subn(pat,rep,s,count=1,flags=re.S)
-          if n != 1:
-              raise SystemExit('Keystore patch target not found')
-          p.write_text(s2)
-          PY
+          python3 -c "from pathlib import Path; import re; p=Path('app/src/main/java/com/decod/grm/SecureStateStore.java'); s=p.read_text(); pat=r'byte\\[\\] iv = new byte\\[12\\];\\s*CryptoUtil\\.RNG\\.nextBytes\\(iv\\);\\s*Cipher cipher = Cipher\\.getInstance\\(\\\"AES/GCM/NoPadding\\\"\\);\\s*cipher\\.init\\(Cipher\\.ENCRYPT_MODE, getOrCreateKey\\(\\), new GCMParameterSpec\\(128, iv\\)\\);\\s*byte\\[\\] ct = cipher\\.doFinal\\(plain\\);'; rep='Cipher cipher = Cipher.getInstance(\\\"AES/GCM/NoPadding\\\");\\n        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey());\\n        byte[] iv = cipher.getIV();\\n        if (iv == null || iv.length != 12) throw new IllegalStateException(\\\"Android Keystore IV üretemedi\\\");\\n        byte[] ct = cipher.doFinal(plain);'; s2,n=re.subn(pat,rep,s,count=1,flags=re.S); assert n==1, 'Keystore patch target not found'; p.write_text(s2)"
       - name: Prepare Android SDK
         run: |
           export ANDROID_HOME=/usr/local/lib/android/sdk
