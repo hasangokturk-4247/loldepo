@@ -22,17 +22,23 @@ jobs:
         run: |
           set -euxo pipefail
           cat grm-final/r00 grm-final/r01 grm-final/r02 grm-final/r03 grm-final/r04 grm-final/r05 grm-final/r06 grm-final/r07 grm-final/p01 grm-final/p02 grm-final/p03 grm-final/p04 > /tmp/grm.tar.xz
-          sha256sum /tmp/grm.tar.xz
           test "$(sha256sum /tmp/grm.tar.xz | awk '{print $1}')" = "f4d3b1143362aa34d32083298523b2fb945c8cd682c697a7460ee5cf0a129efb"
           rm -rf app build.gradle settings.gradle gradle.properties README.md
           tar -xJf /tmp/grm.tar.xz
-      - uses: android-actions/setup-android@v3
-      - name: Install Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Prepare Android SDK
+        run: |
+          set -euxo pipefail
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
       - name: Build debug APK
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: gradle :app:assembleDebug --stacktrace
       - name: Rename APK
         run: cp app/build/outputs/apk/debug/app-debug.apk G-Rm_Android_v22.0.1_QR.apk
