@@ -10,7 +10,7 @@ namespace DecodGrmNative {
         void ShowDashboard(){
             headerTitle.Text="Ana Rapor";
             var wrap=new FlowLayoutPanel{Dock=DockStyle.Fill,AutoScroll=true,Padding=new Padding(2),WrapContents=true};
-            var cs=List("customers"),vs=List("visits"),qs=List("quotes"),rs=List("reminders");
+            var cs=List("customers"); var vs=List("visits"); var qs=List("quotes");
             wrap.Controls.Add(StatCard("Müşteri",cs.Count.ToString()));
             wrap.Controls.Add(StatCard("Ziyaret",vs.Count.ToString()));
             wrap.Controls.Add(StatCard("Teklif",qs.Count.ToString()));
@@ -28,7 +28,7 @@ namespace DecodGrmNative {
 
         void ShowCustomers(){
             headerTitle.Text="Müşteriler";var grid=Grid();var tb=Toolbar();
-            var add=Primary("+ Yeni Müşteri"),edit=new Button{Text="Düzenle",AutoSize=true,Height=34},del=new Button{Text="Sil",AutoSize=true,Height=34},exp=new Button{Text="Excel Dışa Aktar",AutoSize=true,Height=34};
+            Button add=Primary("+ Yeni Müşteri"); Button edit=new Button{Text="Düzenle",AutoSize=true,Height=34}; Button del=new Button{Text="Sil",AutoSize=true,Height=34}; Button exp=new Button{Text="Excel Dışa Aktar",AutoSize=true,Height=34};
             add.Enabled=J.Perm(root,"customer.edit");edit.Enabled=add.Enabled;del.Enabled=J.Perm(root,"customer.delete");exp.Enabled=J.Perm(root,"customer.export");
             add.Click+=(s,e)=>EditCustomer(null);edit.Click+=(s,e)=>EditCustomer(Selected(grid));del.Click+=(s,e)=>Delete("customer",Selected(grid),"code","Müşteri");exp.Click+=(s,e)=>Export("customers","G-Rm_Musteriler");
             tb.Controls.AddRange(new Control[]{add,edit,del,exp});body.Controls.Add(grid);body.Controls.Add(tb);
@@ -44,7 +44,7 @@ namespace DecodGrmNative {
 
         void ShowProducts(){
             headerTitle.Text="Ürünler";var grid=Grid();var tb=Toolbar();
-            var add=Primary("+ Yeni Ürün"),edit=new Button{Text="Düzenle",AutoSize=true,Height=34},del=new Button{Text="Sil",AutoSize=true,Height=34},exp=new Button{Text="Excel Dışa Aktar",AutoSize=true,Height=34};
+            Button add=Primary("+ Yeni Ürün"); Button edit=new Button{Text="Düzenle",AutoSize=true,Height=34}; Button del=new Button{Text="Sil",AutoSize=true,Height=34}; Button exp=new Button{Text="Excel Dışa Aktar",AutoSize=true,Height=34};
             add.Enabled=J.Perm(root,"product.edit");edit.Enabled=add.Enabled;del.Enabled=J.Perm(root,"product.delete");exp.Enabled=J.Perm(root,"product.export");
             add.Click+=(s,e)=>EditProduct(null);edit.Click+=(s,e)=>EditProduct(Selected(grid));del.Click+=(s,e)=>Delete("product",Selected(grid),"code","Ürün");exp.Click+=(s,e)=>Export("products","G-Rm_Urunler");
             tb.Controls.AddRange(new Control[]{add,edit,del,exp});body.Controls.Add(grid);body.Controls.Add(tb);
@@ -60,7 +60,7 @@ namespace DecodGrmNative {
 
         void ShowVisits(){
             headerTitle.Text="Ziyaretler";var grid=Grid();var tb=Toolbar();
-            var add=Primary("+ Yeni Ziyaret"),edit=new Button{Text="Düzenle",AutoSize=true,Height=34},del=new Button{Text="Sil",AutoSize=true,Height=34},exp=new Button{Text="Excel Dışa Aktar",AutoSize=true,Height=34};
+            Button add=Primary("+ Yeni Ziyaret"); Button edit=new Button{Text="Düzenle",AutoSize=true,Height=34}; Button del=new Button{Text="Sil",AutoSize=true,Height=34}; Button exp=new Button{Text="Excel Dışa Aktar",AutoSize=true,Height=34};
             add.Enabled=J.Perm(root,"visit.edit");edit.Enabled=add.Enabled;del.Enabled=J.Perm(root,"visit.delete");exp.Enabled=J.Perm(root,"visit.view");
             add.Click+=(s,e)=>EditVisit(null);edit.Click+=(s,e)=>EditVisit(Selected(grid));del.Click+=(s,e)=>Delete("visit",Selected(grid),"id","Ziyaret");exp.Click+=(s,e)=>Export("visits","G-Rm_Ziyaretler");
             tb.Controls.AddRange(new Control[]{add,edit,del,exp});body.Controls.Add(grid);body.Controls.Add(tb);
@@ -76,7 +76,7 @@ namespace DecodGrmNative {
 
         void ShowReminders(){
             headerTitle.Text="Ziyaret Hatırlatmaları";var grid=Grid();var tb=Toolbar();
-            var add=Primary("+ Hatırlatma"),edit=new Button{Text="Düzenle",AutoSize=true,Height=34},done=new Button{Text="Tamamlandı",AutoSize=true,Height=34},snooze=new Button{Text="1 Gün Ertele",AutoSize=true,Height=34},del=new Button{Text="Sil",AutoSize=true,Height=34};
+            Button add=Primary("+ Hatırlatma"); Button edit=new Button{Text="Düzenle",AutoSize=true,Height=34}; Button done=new Button{Text="Tamamlandı",AutoSize=true,Height=34}; Button snooze=new Button{Text="1 Gün Ertele",AutoSize=true,Height=34}; Button del=new Button{Text="Sil",AutoSize=true,Height=34};
             bool can=J.Perm(root,"visit.edit");add.Enabled=edit.Enabled=done.Enabled=snooze.Enabled=can;del.Enabled=J.Perm(root,"visit.delete");
             add.Click+=(s,e)=>EditReminder(null);edit.Click+=(s,e)=>EditReminder(Selected(grid));done.Click+=(s,e)=>ReminderAction(Selected(grid),"done");snooze.Click+=(s,e)=>ReminderAction(Selected(grid),"snooze");del.Click+=(s,e)=>Delete("reminder",Selected(grid),"id","Hatırlatma");
             tb.Controls.AddRange(new Control[]{add,edit,done,snooze,del});body.Controls.Add(grid);body.Controls.Add(tb);
@@ -92,7 +92,7 @@ namespace DecodGrmNative {
 
         void ShowQuotes(){
             headerTitle.Text="Teklifler";var grid=Grid();var tb=Toolbar();
-            var add=Primary("+ Yeni Teklif"),edit=new Button{Text="Düzenle",AutoSize=true,Height=34},del=new Button{Text="Sil",AutoSize=true,Height=34},exp=new Button{Text="Excel Dışa Aktar",AutoSize=true,Height=34};
+            Button add=Primary("+ Yeni Teklif"); Button edit=new Button{Text="Düzenle",AutoSize=true,Height=34}; Button del=new Button{Text="Sil",AutoSize=true,Height=34}; Button exp=new Button{Text="Excel Dışa Aktar",AutoSize=true,Height=34};
             add.Enabled=J.Perm(root,"quote.edit");edit.Enabled=add.Enabled;del.Enabled=J.Perm(root,"quote.delete");exp.Enabled=J.Perm(root,"quote.view");
             add.Click+=(s,e)=>EditQuote(null);edit.Click+=(s,e)=>EditQuote(Selected(grid));del.Click+=(s,e)=>Delete("quote",Selected(grid),"id","Teklif");exp.Click+=(s,e)=>Export("quotes","G-Rm_Teklifler");
             tb.Controls.AddRange(new Control[]{add,edit,del,exp});body.Controls.Add(grid);body.Controls.Add(tb);
@@ -113,7 +113,7 @@ namespace DecodGrmNative {
             var fields=new[]{new[]{"Firma Adı","companyName"},new[]{"Şehir","companyCity"},new[]{"Web","companyWeb"},new[]{"Telefon","companyPhone"},new[]{"E-posta","companyEmail"},new[]{"IBAN","companyIban"},new[]{"Hatırlatma (gün)","reminderDays"},new[]{"Sync aralığı (sn)","syncIntervalSec"}};
             var boxes=new Dictionary<string,TextBox>();int y=18;
             foreach(var f in fields){card.Controls.Add(new Label{Text=f[0],Left=18,Top=y+4,Width=185,Height=24});var t=new TextBox{Left=210,Top=y,Width=510,Height=28,Text=J.S(settings,f[1])};boxes[f[1]]=t;card.Controls.Add(t);y+=42;}
-            var startup=new CheckBox{Text="Windows ile başlat",Left=210,Top=y,Width=230,Checked=J.B(settings,"startWithWindows")};var traybox=new CheckBox{Text="Kapatınca sistem tepsisine küçült",Left=450,Top=y,Width=270,Checked=J.B(settings,"minimizeToTray",true)};card.Controls.Add(startup);card.Controls.Add(traybox);y+=46;
+            CheckBox startup=new CheckBox{Text="Windows ile başlat",Left=210,Top=y,Width=230,Checked=J.B(settings,"startWithWindows")}; CheckBox traybox=new CheckBox{Text="Kapatınca sistem tepsisine küçült",Left=450,Top=y,Width=270,Checked=J.B(settings,"minimizeToTray",true)};card.Controls.Add(startup);card.Controls.Add(traybox);y+=46;
             var save=Primary("Ayarları Kaydet");save.Left=210;save.Top=y;save.Enabled=J.Perm(root,"settings.manage");save.Click+=(s,e)=>{try{var outp=J.Clone(settings);foreach(var kv in boxes){if(kv.Key=="reminderDays"||kv.Key=="syncIntervalSec"){int n;if(!int.TryParse(kv.Value.Text,out n))throw new Exception(kv.Key+" sayı olmalı");outp[kv.Key]=n;}else outp[kv.Key]=kv.Value.Text.Trim();}outp["startWithWindows"]=startup.Checked;outp["minimizeToTray"]=traybox.Checked;api.SaveSettings(outp);Reload(false);Info("Ayarlar kaydedildi.");}catch(Exception ex){Error(ex);}};card.Controls.Add(save);y+=50;
             var pair=Primary("Mobil Cihaz Eşleştir");pair.Left=210;pair.Top=y;pair.Width=180;pair.Enabled=J.B(root,"cloudReady");pair.Click+=(s,e)=>ShowPairing();card.Controls.Add(pair);
             var backup=new Button{Text="Yerel Yedek Al",Left=405,Top=y,Width=145,Height=34};backup.Enabled=J.Perm(root,"backup.restore");backup.Click+=(s,e)=>Backup();card.Controls.Add(backup);
