@@ -26,6 +26,7 @@ jobs:
           rm -rf app build.gradle settings.gradle gradle.properties README.md
           tar -xJf /tmp/grm.tar.xz
           rm -f app/src/main/res/drawable/icon.xml
+          sed -i 's/import android.app.PrintManager;/import android.print.PrintManager;/' app/src/main/java/com/decod/grm/MainActivity.java
       - name: Prepare Android SDK
         run: |
           set -euxo pipefail
