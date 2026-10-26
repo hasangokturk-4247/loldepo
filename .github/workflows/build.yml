@@ -1,45 +1,51 @@
-name: Build LOL Encyclopedia
-
+name: G-Rm Android Build
 on:
-  pull_request:
-  workflow_dispatch:
-
+  push:
+    branches:
+      - grm-android-build
 permissions:
   contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          python-version: '3.12'
-      - name: Install dependencies
+          distribution: temurin
+          java-version: '17'
+      - name: Reconstruct and patch Android project
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-dejavu-core poppler-utils
-          python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 lxml pillow reportlab
-      - name: Apply hotfixes
-        run: python hotfix.py
-      - name: Build PDF
-        run: python build.py
-      - name: Verify PDF
+          set -euxo pipefail
+          cat grm-final/r00 grm-final/r01 grm-final/r02 grm-final/r03 grm-final/r04 grm-final/r05 grm-final/r06 grm-final/r07 grm-final/p01 grm-final/p02 grm-final/p03 grm-final/p04 > /tmp/grm.tar.xz
+          rm -rf app build.gradle settings.gradle gradle.properties README.md
+          tar -xJf /tmp/grm.tar.xz
+          rm -f app/src/main/res/drawable/icon.xml
+          cp grm-final/real_icon.png app/src/main/res/drawable/icon.png
+          cp grm-final/real_icon.png app/src/main/assets/logo.png
+          sed -i 's/import android.app.PrintManager;/import android.print.PrintManager;/' app/src/main/java/com/decod/grm/MainActivity.java
+          python3 -c "from pathlib import Path; import re; p=Path('app/src/main/java/com/decod/grm/SecureStateStore.java'); s=p.read_text(); pat=r'byte\\[\\] iv = new byte\\[12\\];\\s*CryptoUtil\\.RNG\\.nextBytes\\(iv\\);\\s*Cipher cipher = Cipher\\.getInstance\\(\\\"AES/GCM/NoPadding\\\"\\);\\s*cipher\\.init\\(Cipher\\.ENCRYPT_MODE, getOrCreateKey\\(\\), new GCMParameterSpec\\(128, iv\\)\\);\\s*byte\\[\\] ct = cipher\\.doFinal\\(plain\\);'; rep='Cipher cipher = Cipher.getInstance(\\\"AES/GCM/NoPadding\\\");\\n        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey());\\n        byte[] iv = cipher.getIV();\\n        if (iv == null || iv.length != 12) throw new IllegalStateException(\\\"Android Keystore IV üretemedi\\\");\\n        byte[] ct = cipher.doFinal(plain);'; s2,n=re.subn(pat,rep,s,count=1,flags=re.S); assert n==1, 'Keystore patch target not found'; p.write_text(s2)"
+      - name: Prepare Android SDK
         run: |
-          test -s output/LOL_Ansiklopedi_Riot_2026.pdf
-          pdfinfo output/LOL_Ansiklopedi_Riot_2026.pdf
-          mkdir -p qa
-          pdftoppm -f 1 -l 4 -jpeg -r 100 output/LOL_Ansiklopedi_Riot_2026.pdf qa/page
-      - name: Upload PDF
-        uses: actions/upload-artifact@v4
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
         with:
-          name: LOL_Ansiklopedi_Riot_2026
-          path: |
-            output/LOL_Ansiklopedi_Riot_2026.pdf
-            qa/*.jpg
+          gradle-version: '8.10.2'
+      - name: Build APK
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: gradle :app:assembleDebug --stacktrace
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk G-Rm_Android_v22.0.2_QR_FIXED.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: G-Rm_Android_v22.0.2_QR_FIXED
+          path: G-Rm_Android_v22.0.2_QR_FIXED.apk
           retention-days: 7
           compression-level: 0

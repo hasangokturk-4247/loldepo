@@ -1,0 +1,153 @@
+package com.decod.grm;
+
+import android.Manifest;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.MediaStore;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+public class MainActivity extends Activity {
+    private static final int PICK_LICENSE = 1001;
+    private static final int NAVY = Color.rgb(11,43,73);
+    private static final int BLUE = Color.rgb(8,120,209);
+    private static final int BG = Color.rgb(244,247,251);
+    private static final int TEXT = Color.rgb(31,41,55);
+    private static final int MUTED = Color.rgb(100,116,139);
+    private static final int RED = Color.rgb(220,38,38);
+
+    private GrmStore store;
+    private LinearLayout content;
+    private String screen = "home";
+    private boolean syncing = false;
+
+    @Override public void onCreate(Bundle state) {
+        super.onCreate(state);
+        getWindow().setStatusBarColor(NAVY);
+        try { store = new GrmStore(this); }
+        catch (Exception e) { fatal(e); return; }
+        buildShell();
+        SyncJobService.schedule(this);
+        if (android.os.Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 9);
+        }
+        render();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (store != null && store.isLicensed() && !syncing) sync(false);
+    }
+
+    private void buildShell() {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(BG);
+
+        TextView top = text("G-Rm   •   DECOD", 20, true);
+        top.setTextColor(Color.WHITE);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        top.setPadding(dp(18), dp(14), dp(18), dp(14));
+        top.setBackgroundColor(NAVY);
+        root.addView(top, new LinearLayout.LayoutParams(-1, dp(58)));
+
+        content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(content);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        LinearLayout nav = new LinearLayout(this);
+        nav.setOrientation(LinearLayout.HORIZONTAL);
+        nav.setBackgroundColor(Color.WHITE);
+        addNav(nav, "Ana", "home");
+        addNav(nav, "Müşteri", "customers");
+        addNav(nav, "Ziyaret", "visits");
+        addNav(nav, "Teklif", "quotes");
+        addNav(nav, "Daha", "more");
+        root.addView(nav, new LinearLayout.LayoutParams(-1, dp(62)));
+        setContentView(root);
+    }
+
+    private void addNav(LinearLayout nav, String label, String target) {
+        Button b = new Button(this);
+        b.setText(label);
+        b.setTextSize(11);
+        b.setAllCaps(false);
+        b.setOnClickListener(v -> { screen = target; render(); });
+        nav.addView(b, new LinearLayout.LayoutParams(0, dp(62), 1));
+    }
+
+    private void render() {
+        content.removeAllViews();
+        content.setPadding(dp(14), dp(14), dp(14), dp(24));
+        try {
+            if (!store.isLicensed()) { renderActivation(); return; }
+            switch (screen) {
+                case "customers" -> renderCustomers();
+                case "visits" -> renderVisits();
+                case "quotes" -> renderQuotes();
+                case "more" -> renderMore();
+                case "products" -> renderProducts();
+                case "reminders" -> renderReminders();
+                case "team" -> renderTeam();
+                case "settings" -> renderSettings();
+                default -> renderHome();
+            }
+        } catch (Exception e) { toast(e.getMessage()); }
+    }
+
+    private void renderActivation() {
+        title("G-Rm Mobil Aktivasyon");
+        content.addView(cardText("Bu telefon için kurulum kodu", LicenseManager.installationCode(this)));
+        Button copy = primary("Kurulum Kodunu Kopyala");
+        copy.setOnClickListener(v -> {
+            ((ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(
+                    ClipData.newPlainText("G-Rm Kurulum Kodu", LicenseManager.installationCode(this)));
+            toast("Kurulum kodu kopyalandı");
+        });
+        content.addView(copy);
+        Button load = secondary(".dgrm Lisansını Yükle");
+        load.setOnClickListener(v -> {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.setType("*/*");
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            startActivityForResult(i, PICK_LICENSE);
+        });
+        content.addView(load);
+        small("Ana PC'deki DECOD lisans üreticide mevcut firmayı seçin. Bu telefonun GRM21 kurulum koduyla ayrı .dgrm oluşturun.");
+    }
+
+    @Override protected void onActivityResult(int req, int result, Intent data) {
+        super.onActivityResult(req, result, data);
+        if (req != PICK_LICENSE || result != RESULT_OK || data == null || data.getData() == null) return;
