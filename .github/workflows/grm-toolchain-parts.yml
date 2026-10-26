@@ -1,0 +1,71 @@
+name: GRM Toolchain Parts
+on:
+  push:
+    branches: ['build-tools/grm-20261026']
+    paths: ['.github/workflows/grm-toolchain-parts.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  split:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 40270169162
+          name: grm-public-toolchain
+          github-token: ${{ github.token }}
+          path: tools
+      - run: |
+          mkdir -p parts index
+          split -b 75M -d -a 2 tools/grm-public-toolchain.tgz parts/toolchain-part-
+          sha256sum tools/grm-public-toolchain.tgz > index/SHA256.txt
+          printf 'Public build toolchain is split into parts 00 through 06. Concatenate before extracting.\n' > index/README.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grm-toolchain-index
+          path: index/
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grm-tools-00
+          path: parts/toolchain-part-00
+          compression-level: 0
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grm-tools-01
+          path: parts/toolchain-part-01
+          compression-level: 0
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grm-tools-02
+          path: parts/toolchain-part-02
+          compression-level: 0
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grm-tools-03
+          path: parts/toolchain-part-03
+          compression-level: 0
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grm-tools-04
+          path: parts/toolchain-part-04
+          compression-level: 0
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grm-tools-05
+          path: parts/toolchain-part-05
+          compression-level: 0
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grm-tools-06
+          path: parts/toolchain-part-06
+          compression-level: 0
+          retention-days: 1
