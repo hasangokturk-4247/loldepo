@@ -1,0 +1,20 @@
+name: G-Rm V3 APK Transfer
+on:
+  push:
+    paths:
+      - ".github/workflows/grm-v3-apk.yml"
+  workflow_dispatch:
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download final APK
+        run: |
+          curl -fL --retry 5 --retry-delay 2 "https://android-function-builder-production.up.railway.app/artifact" -o G-Rm_V3.0.apk
+          echo "36dbe6d9e2c89958a6d7124b1059db6935d109a5dc13a20033075809b674f7bc  G-Rm_V3.0.apk" | sha256sum -c -
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: G-Rm_V3.0_APK
+          path: G-Rm_V3.0.apk
+          if-no-files-found: error
