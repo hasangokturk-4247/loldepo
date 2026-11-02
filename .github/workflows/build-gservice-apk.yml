@@ -1,9 +1,9 @@
 name: Build G-Service APK
 
 on:
-  push:
+  pull_request:
     branches:
-      - gservice-apk-1.0.5
+      - main
 
 jobs:
   build:
