@@ -22,6 +22,9 @@ import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
@@ -79,7 +82,7 @@ public class MainActivity extends Activity {
         ws.setSupportZoom(false);
         ws.setBuiltInZoomControls(false);
         ws.setDisplayZoomControls(false);
-        ws.setUserAgentString(ws.getUserAgentString() + " G-Service-Android/1.0.2");
+        ws.setUserAgentString(ws.getUserAgentString() + " G-Service-Android/1.0.3");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
@@ -113,9 +116,20 @@ public class MainActivity extends Activity {
                 dp(58),
                 Gravity.BOTTOM
         );
-        bp.setMargins(dp(16), 0, dp(16), dp(24));
+        bp.setMargins(dp(16), 0, dp(16), dp(16));
         root.addView(scanButton, bp);
         scanButton.bringToFront();
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            Insets nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            Insets cutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout());
+            int safeBottom = Math.max(nav.bottom, cutout.bottom);
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) scanButton.getLayoutParams();
+            params.setMargins(dp(16), 0, dp(16), safeBottom + dp(16));
+            scanButton.setLayoutParams(params);
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(root);
 
         webView.loadUrl(BASE_URL);
     }
