@@ -1,0 +1,44 @@
+name: Build G-Service APK
+
+on:
+  push:
+    branches:
+      - gservice-apk-build
+    paths:
+      - 'app/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - '.github/workflows/build-gservice-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug APK
+        run: gradle :app:assembleDebug
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk G-Service.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: G-Service-APK
+          path: G-Service.apk
+          if-no-files-found: error
