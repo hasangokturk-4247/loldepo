@@ -29,7 +29,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends Activity {
-    private static final String BASE_URL = "https://decod-servis-api-production.up.railway.app/app";
+    private static final String BASE_URL = "https://decod-servis-api-production.up.railway.app/app?android=1";
     private WebView webView;
     private FrameLayout root;
     private TextView scanButton;
@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
         ws.setSupportZoom(false);
         ws.setBuiltInZoomControls(false);
         ws.setDisplayZoomControls(false);
-        ws.setUserAgentString(ws.getUserAgentString() + " G-Service-Android/1.0.0");
+        ws.setUserAgentString(ws.getUserAgentString() + " G-Service-Android/1.0.1");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
@@ -146,7 +146,7 @@ public class MainActivity extends Activity {
         if (result != null) {
             if (result.getContents() != null && webView != null) {
                 String q = URLEncoder.encode(result.getContents(), StandardCharsets.UTF_8);
-                webView.loadUrl(BASE_URL + "?scan=" + q);
+                webView.loadUrl(BASE_URL + "&scan=" + q);
             }
             return;
         }
