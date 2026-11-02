@@ -281,7 +281,7 @@ public class MainActivity extends Activity {
 
     private void startQrScan() {
         IntentIntegrator integrator = new IntentIntegrator(this);
-        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
         integrator.setPrompt("Makinenin QR kodunu okutun");
         integrator.setBeepEnabled(false);
         integrator.setOrientationLocked(false);
