@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -78,7 +79,7 @@ public class MainActivity extends Activity {
         ws.setSupportZoom(false);
         ws.setBuiltInZoomControls(false);
         ws.setDisplayZoomControls(false);
-        ws.setUserAgentString(ws.getUserAgentString() + " G-Service-Android/1.0.1");
+        ws.setUserAgentString(ws.getUserAgentString() + " G-Service-Android/1.0.2");
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
@@ -92,24 +93,35 @@ public class MainActivity extends Activity {
         ));
 
         scanButton = new TextView(this);
-        scanButton.setText("QR TARA");
+        scanButton.setText("QR KODU TARA");
         scanButton.setTextColor(Color.WHITE);
-        scanButton.setTextSize(14f);
+        scanButton.setTextSize(16f);
         scanButton.setGravity(Gravity.CENTER);
         scanButton.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        scanButton.setBackgroundColor(Color.rgb(17, 24, 39));
-        scanButton.setPadding(34, 18, 34, 18);
+        scanButton.setClickable(true);
+        scanButton.setFocusable(true);
+        scanButton.setElevation(dp(12));
+
+        GradientDrawable qrBg = new GradientDrawable();
+        qrBg.setColor(Color.rgb(227, 6, 19));
+        qrBg.setCornerRadius(dp(14));
+        scanButton.setBackground(qrBg);
         scanButton.setOnClickListener(v -> startQr());
 
         FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.END | Gravity.BOTTOM
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(58),
+                Gravity.BOTTOM
         );
-        bp.setMargins(0, 0, 28, 32);
+        bp.setMargins(dp(16), 0, dp(16), dp(24));
         root.addView(scanButton, bp);
+        scanButton.bringToFront();
 
         webView.loadUrl(BASE_URL);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private void startQr() {
