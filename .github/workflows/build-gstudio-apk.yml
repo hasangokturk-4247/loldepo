@@ -1,0 +1,64 @@
+name: Build G-Studio Mobile APK
+
+on:
+  push:
+    branches:
+      - gstudio-mobile-build
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Reconstruct source
+        shell: bash
+        run: |
+          cat gstudio-build/chunks/chunk_*.txt gstudio-build/rest/rest_*.txt > gstudio.b64
+          base64 -d gstudio.b64 > gstudio.zip
+          mkdir work
+          unzip -q gstudio.zip -d work
+          test -f work/settings.gradle
+          test -f work/app/build.gradle
+
+      - name: Install Android 35
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Build APK
+        shell: bash
+        run: |
+          cd work
+          gradle --no-daemon :app:assembleDebug
+
+      - name: Prepare APK
+        shell: bash
+        run: |
+          cp work/app/build/outputs/apk/debug/app-debug.apk G-Studio_Mobile_2.0.0.apk
+          test -s G-Studio_Mobile_2.0.0.apk
+          sha256sum G-Studio_Mobile_2.0.0.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: G-Studio_Mobile_2.0.0
+          path: G-Studio_Mobile_2.0.0.apk
+          if-no-files-found: error
