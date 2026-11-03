@@ -1,0 +1,8 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'com.decod.etiketstudio'
+ compileSdk 35
+ defaultConfig { applicationId 'com.decod.etiketstudio'; minSdk 23; targetSdk 35; versionCode 20; versionName '2.0.0' }
+ compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+ buildTypes { debug { minifyEnabled false }; release { minifyEnabled false } }
+}
