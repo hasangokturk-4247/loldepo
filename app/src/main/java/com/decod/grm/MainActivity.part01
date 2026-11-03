@@ -1,0 +1,67 @@
+        try (InputStream in = getContentResolver().openInputStream(data.getData()); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            byte[] buf = new byte[8192]; int n;
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            store.activate(out.toByteArray());
+            toast("Lisans yüklendi");
+            sync(true);
+            render();
+        } catch (Exception e) {
+            new AlertDialog.Builder(this).setTitle("Lisans yüklenemedi").setMessage(e.getMessage()).setPositiveButton("Tamam", null).show();
+        }
+    }
+
+    private void renderHome() throws Exception {
+        JSONObject s = store.settings();
+        title("Ana Rapor");
+        LinearLayout stats = row();
+        stats.addView(stat("Müşteri", activeCount(store.customers())), weight());
+        stats.addView(stat("Ziyaret", activeCount(store.visits())), weight());
+        stats.addView(stat("Teklif", activeCount(store.quotes())), weight());
+        content.addView(stats);
+        content.addView(cardText("G-Cloud", s.optString("lastSyncStatus", "Hazır") + "\nBekleyen değişiklik: " + store.outbox().length() + "\nSon eşitleme: " + s.optString("lastSyncAt", "Henüz yok")));
+        Button sync = primary("Şimdi Eşitle"); sync.setOnClickListener(v -> sync(true)); content.addView(sync);
+        titleSmall("Yaklaşan / Gecikenler");
+        List<JSONObject> due = dueItems();
+        if (due.isEmpty()) small("Yaklaşan veya geciken kayıt yok.");
+        for (JSONObject d : due) content.addView(dueCard(d));
+        titleSmall("Hızlı İşlemler");
+        if (store.hasPermission("customer.edit")) { Button b=secondary("+ Müşteri"); b.setOnClickListener(v->editCustomer(null)); content.addView(b); }
+        if (store.hasPermission("visit.edit")) { Button b=secondary("+ Ziyaret"); b.setOnClickListener(v->editVisit(null)); content.addView(b); }
+        if (store.hasPermission("quote.edit")) { Button b=secondary("+ Teklif"); b.setOnClickListener(v->editQuote(null)); content.addView(b); }
+    }
+
+    private void renderCustomers() throws Exception {
+        title("Müşteriler");
+        if (store.hasPermission("customer.edit")) { Button b=primary("+ Yeni Müşteri"); b.setOnClickListener(v->editCustomer(null)); content.addView(b); }
+        JSONArray a = store.customers();
+        for (int i=0;i<a.length();i++) {
+            JSONObject x=a.optJSONObject(i); if(x==null||x.optBoolean("deleted",false))continue;
+            LinearLayout c=card(); c.addView(text(x.optString("name",x.optString("code")),17,true));
+            smallInto(c,x.optString("code")+" • "+x.optString("city")+" "+x.optString("district")+"\n"+x.optString("phone"));
+            c.setOnClickListener(v->editCustomer(x)); content.addView(c);
+        }
+    }
+
+    private void editCustomer(JSONObject src) {
+        try {
+            JSONObject x=src==null?new JSONObject():JsonUtil.deepCopy(src); LinearLayout f=form();
+            EditText code=input("Müşteri Kodu",x.optString("code")); EditText name=input("Firma / Müşteri Adı",x.optString("name"));
+            EditText city=input("Şehir",x.optString("city")); EditText district=input("İlçe",x.optString("district")); EditText phone=input("Telefon",x.optString("phone"));
+            EditText cls=input("Sınıf (A/B/C)",x.optString("customerClass","B")); EditText group=input("Grup",x.optString("group")); EditText notes=input("Not",x.optString("notes"));
+            addAll(f,code,name,city,district,phone,cls,group,notes);
+            AlertDialog.Builder b=new AlertDialog.Builder(this).setTitle(src==null?"Yeni Müşteri":"Müşteriyi Düzenle").setView(f)
+                    .setPositiveButton("Kaydet",(d,w)->{try{x.put("code",code.getText().toString().trim()).put("name",name.getText().toString().trim()).put("city",city.getText().toString().trim()).put("district",district.getText().toString().trim()).put("phone",phone.getText().toString().trim()).put("customerClass",cls.getText().toString().trim()).put("group",group.getText().toString().trim()).put("notes",notes.getText().toString().trim()).put("active",true);if(JsonUtil.s(x,"code").isEmpty()||JsonUtil.s(x,"name").isEmpty())throw new IllegalArgumentException("Kod ve ad zorunludur");store.upsertCustomer(x);render();}catch(Exception e){toast(e.getMessage());}})
+                    .setNegativeButton("İptal",null);
+            if(src!=null&&store.hasPermission("customer.delete"))b.setNeutralButton("Sil",(d,w)->{try{store.delete("customer",JsonUtil.s(x,"code"));render();}catch(Exception e){toast(e.getMessage());}});
+            b.show();
+        } catch(Exception e){toast(e.getMessage());}
+    }
+
+    private void renderVisits() throws Exception {
+        title("Ziyaretler");
+        if(store.hasPermission("visit.edit")){Button b=primary("+ Yeni Ziyaret");b.setOnClickListener(v->editVisit(null));content.addView(b);}
+        JSONArray a=store.visits();
+        for(int i=a.length()-1;i>=0;i--){JSONObject x=a.optJSONObject(i);if(x==null||x.optBoolean("deleted",false))continue;if(!store.hasPermission("visit.all")&&!belongsToMe(x,"visitorId","visitor","createdById","createdBy"))continue;LinearLayout c=card();c.addView(text(x.optString("customerName","Ziyaret"),17,true));smallInto(c,x.optString("date")+" • "+x.optString("status")+"\n"+x.optString("visitor")+(x.optString("nextVisitDate").isEmpty()?"":"\nSonraki: "+x.optString("nextVisitDate")));c.setOnClickListener(v->editVisit(x));content.addView(c);}
+    }
+
+    private void editVisit(JSONObject src){

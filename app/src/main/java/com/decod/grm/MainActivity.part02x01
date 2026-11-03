@@ -1,0 +1,4 @@
+        for(int i=a.length()-1;i>=0;i--){JSONObject x=a.optJSONObject(i);if(x==null||x.optBoolean("deleted",false))continue;if(!store.hasPermission("quote.all")&&!belongsToMe(x,"preparedById","preparedBy","createdById","createdBy"))continue;LinearLayout c=card();c.addView(text(x.optString("no","Teklif")+" • "+x.optString("customerName"),16,true));smallInto(c,x.optString("date")+" • "+x.optString("status","Taslak")+"\nToplam: "+quoteTotal(x));Button pdf=mini("PDF / Paylaş");pdf.setOnClickListener(v->makeQuotePdf(x));c.addView(pdf);c.setOnClickListener(v->editQuote(x));content.addView(c);}
+    }
+
+    private void editQuote(JSONObject src){
